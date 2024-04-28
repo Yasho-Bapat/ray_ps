@@ -15,6 +15,8 @@ Each Iteration
 - the gradients generated are sent back to the ps
 - ps aggregates the gradients, and updates its weights accordingly
 
+There can be multiple parameter servers and multiple workers. Both numbers can be specified in the code. Multiple PS and worker processes can run on the same device, but this should be done decided based on the capabilities of the device. 
+
 We are utilising [Ray](https://docs.ray.io/en/latest/) (an open-source unified compute framework that makes it easy to scale AI and Python workloads) to build the edge clusters and facilitate the distributed training.
 
 ### Using Ray to create a Ray cluster
