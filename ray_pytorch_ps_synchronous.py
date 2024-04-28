@@ -9,9 +9,10 @@ import argparse
 import time
 import ray
 
+'''This example outlines synchronous training. That means that the gradients are aggregated iteratively once they are all available'''
 
 def get_data_loader():
-    """Safely downloads data. Returns training/validation set dataloader."""
+    # downloads data and returns training set
     mnist_transforms = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
@@ -36,7 +37,7 @@ def get_data_loader():
 
 
 def evaluate(model, test_loader):
-    """Evaluates the accuracy of the model on a validation dataset."""
+    #Evaluates the accuracy of the model on a validation dataset. The same function is used for evaluating both, models trained on the devices individually and on the parameter server. 
     model.eval()
     correct = 0
     total = 0
@@ -52,7 +53,7 @@ def evaluate(model, test_loader):
     return 100.0 * correct / total
     
 class ConvNet(nn.Module):
-    """Small ConvNet for MNIST."""
+    # This is a simple CNN for this example. SHOULD BE CHANGED ACCORDING TO USE CASE. 
 
     def __init__(self):
         super(ConvNet, self).__init__()
@@ -91,17 +92,14 @@ class ParameterServer(object):
 
     def apply_gradients(self, *gradients):
         num_workers = len(gradients)
-        summed_gradients = [
-            np.stack(gradient_zip).sum(axis=0) for gradient_zip in zip(*gradients)
-        ]
-        #self.optimizer.zero_grad()
+        summed_gradients = [np.stack(gradient_zip).sum(axis=0) for gradient_zip in zip(*gradients)] # this is where the actual gradient aggregation happens. 
+        self.optimizer.zero_grad()
         self.model.set_gradients(summed_gradients)
         self.optimizer.step()
         return self.model.get_weights()
 
     def get_weights(self):
         return self.model.get_weights()
-
 
 
 @ray.remote
@@ -134,10 +132,11 @@ class DataWorker(object):
 if __name__ == '__main__':
 
     num_workers = 2
-    iterations = 5
+    iterations = 200 # keep this number high. this number is variable for each model. for this simple CNN, 200 iterations leads to a decent accuracy.
     model = ConvNet()
     test_loader = get_data_loader()[1]
-    start_time = time.time()
+
+    start_time = time.time() # start measuring time
 
     ray.init(ignore_reinit_error=True)
     ps = ParameterServer.remote(1e-2)
@@ -146,9 +145,7 @@ if __name__ == '__main__':
     print("Running synchronous parameter server training.")
     current_weights = ps.get_weights.remote()
     accuracy = 0
-    i = 0
-    while accuracy < 90:
-        #print(f'Iteration {i}')
+    for i in range(iterations):
         gradients = [worker.compute_gradients.remote(current_weights) for worker in workers]
         # Calculate update after all gradients are available.
         current_weights = ps.apply_gradients.remote(*gradients)
@@ -156,11 +153,10 @@ if __name__ == '__main__':
         model.set_weights(ray.get(current_weights))
         accuracy = evaluate(model, test_loader)
         print("Iter {}: \taccuracy is {:.1f}".format(i, accuracy))
-        i += 1
 
     print("Final accuracy is {:.1f}.".format(accuracy))
-    end_time = time.time()
+    end_time = time.time() # stop measuring time
     print("Time of job on server ",end_time-start_time)
   
-    # Clean up Ray resources and processes before the next example.
+    # Clean up Ray resources and processes.
     ray.shutdown()
