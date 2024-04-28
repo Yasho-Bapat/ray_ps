@@ -90,19 +90,6 @@ class ParameterServer(object):
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
 
     def apply_gradients(self, *gradients):
-        '''standardized_gradients = []
-        for gradient_zip in zip(*gradients):
-            print("Shape of gradient array is: ",np.stack(gradient_zip).shape)
-            sum_gradient = np.stack(gradient_zip).sum(axis=0)
-            # Append the standardized gradient to the list
-            standardized_gradients.append(mean_gradient)'''
-            
-        '''summed_gradients = [
-            np.stack(gradient_zip).sum(axis=0) for gradient_zip in zip(*gradients)
-        ]'''
-        '''avg_gradients = [
-            np.stack(gradient_zip).mean(axis=0) for gradient_zip in zip(*gradients)
-        ]'''
         num_workers = len(gradients)
         summed_gradients = [
             np.stack(gradient_zip).sum(axis=0) for gradient_zip in zip(*gradients)
@@ -115,41 +102,7 @@ class ParameterServer(object):
     def get_weights(self):
         return self.model.get_weights()
 
-'''class ParameterServer(object):
-    def __init__(self, lr):
-        self.model = ConvNet()
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
 
-    def apply_gradients(self, *gradients):
-        print(gradients)
-        #summed_gradients = [np.stack(gradient_zip).sum(axis=0) for gradient_zip in zip(*gradients) # this is the aggregation part. FIX]
-        summed_gradients = self.weighted_sum_gradients(gradients)
-        self.optimizer.zero_grad()
-        self.model.set_gradients(summed_gradients)
-        self.optimizer.step()
-        return self.model.get_weights()
-        
-    def weighted_sum_gradients(self, gradients):
-        max_shape = np.max([np.array(grad).shape for grad in gradients], axis=0)
-
-        # Pad gradients to the maximum shape
-        padded_gradients = []
-        for grad in gradients:
-            grad_np = np.array(grad)
-            pad_width = [(0, max_shape[i] - grad_np.shape[i]) for i in range(len(max_shape))]
-            padded_grad = np.pad(grad_np, pad_width, mode='constant', constant_values=0)
-            padded_gradients.append(padded_grad)
-
-        # Calculate weighted sum
-        num_gradients = len(padded_gradients)
-        weighted_gradients = np.zeros_like(padded_gradients[0])
-        for grad in padded_gradients:
-            weighted_gradients += grad * (1 / num_gradients)  # Equal weights for now
-
-        return weighted_gradients
-
-    def get_weights(self):
-        return self.model.get_weights()'''
 
 @ray.remote
 class DataWorker(object):
@@ -178,37 +131,7 @@ class DataWorker(object):
    
 
 
-if __name__ == '__main__':
-
-    '''num_workers = 2
-    iterations = 5
-    model = ConvNet()
-    test_loader = get_data_loader()[1]
-
-
-    ray.init(ignore_reinit_error=True)
-    ps = ParameterServer.remote(1e-2)
-    workers = [DataWorker.remote() for i in range(num_workers)]
-
-    print("Running synchronous parameter server training.")
-    current_weights = ps.get_weights.remote()
-    accuracy = 0
-    i = 0
-    while accuracy < 90:
-        #print(f'Iteration {i}')
-        gradients = [worker.compute_gradients.remote(current_weights) for worker in workers]
-        # Calculate update after all gradients are available.
-        current_weights = ps.apply_gradients.remote(*gradients)
-        # Evaluate the current model.
-        model.set_weights(ray.get(current_weights))
-        accuracy = evaluate(model, test_loader)
-        print("Iter {}: \taccuracy is {:.1f}".format(i, accuracy))
-        i += 1
-
-    print("Final accuracy is {:.1f}.".format(accuracy))
-    # Clean up Ray resources and processes before the next example.
-    ray.shutdown()'''
-    
+if __name__ == '__main__':   
     
     print("Running Asynchronous Parameter Server Training.")
     start_time = time.time()
