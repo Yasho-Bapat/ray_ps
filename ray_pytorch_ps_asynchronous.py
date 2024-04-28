@@ -9,6 +9,8 @@ import argparse
 import time
 import ray
 
+'''This example outlines asynchronous training. This means that gradients are aggregated in parallel, as soon as they are available. The aggregation is not dependent upon whether the other nodes have finished or not.
+    This could, ideally, be a bit faster than synchronous'''
 
 def get_data_loader():
     """Safely downloads data. Returns training/validation set dataloader."""
@@ -36,7 +38,7 @@ def get_data_loader():
 
 
 def evaluate(model, test_loader):
-    """Evaluates the accuracy of the model on a validation dataset."""
+    #Evaluates the accuracy of the model on a validation dataset. The same function is used to evaluate the models when they are run on the individual machines and on the parameter server
     model.eval()
     correct = 0
     total = 0
@@ -52,7 +54,7 @@ def evaluate(model, test_loader):
     return 100.0 * correct / total
     
 class ConvNet(nn.Module):
-    """Small ConvNet for MNIST."""
+    # this is a simple example model. THIS SHOULD BE CHANGED ACCORDING TO USECASE
 
     def __init__(self):
         super(ConvNet, self).__init__()
@@ -91,10 +93,8 @@ class ParameterServer(object):
 
     def apply_gradients(self, *gradients):
         num_workers = len(gradients)
-        summed_gradients = [
-            np.stack(gradient_zip).sum(axis=0) for gradient_zip in zip(*gradients)
-        ]
-        #self.optimizer.zero_grad()
+        summed_gradients = [np.stack(gradient_zip).sum(axis=0) for gradient_zip in zip(*gradients)] # this is where the actual gradient aggregation occurs. 
+        self.optimizer.zero_grad()
         self.model.set_gradients(summed_gradients)
         self.optimizer.step()
         return self.model.get_weights()
@@ -130,6 +130,7 @@ class DataWorker(object):
         return self.model.get_gradients()
    
 
+# Differences between synchronous and asynchronous are in the main function. Both use the same aggregation function (apply_gradients). What's different is how and when the aggregation function is called. 
 
 if __name__ == '__main__':   
     
@@ -137,6 +138,7 @@ if __name__ == '__main__':
     start_time = time.time()
     
     num_workers = 2 #try to keep this equal to the number of machines available
+    iterations = 200 # keep this number high. it is variable, dependent upon the model you are running. 
     model = ConvNet()
     test_loader = get_data_loader()[1]
         
@@ -151,9 +153,8 @@ if __name__ == '__main__':
         gradients[worker.compute_gradients.remote(current_weights)] = worker
 
     accuracy = 0
-    i = 0
-    while i<200:
-        ready_gradient_list, _ = ray.wait(list(gradients))
+    for i in range(iterations)
+        ready_gradient_list, _ = ray.wait(list(gradients)) # ray.wait is an asynchronous call. the .wait() function ensures that whenever anything is possible in gradients, it is immediately used. 
         ready_gradient_id = ready_gradient_list[0]
         worker = gradients.pop(ready_gradient_id)
 
@@ -166,7 +167,6 @@ if __name__ == '__main__':
             model.set_weights(ray.get(current_weights))
             accuracy = evaluate(model, test_loader)
             print("Iter {}: \taccuracy is {:.1f}".format(i, accuracy))
-        i += 1
 
     print("Final accuracy is {:.1f}.".format(accuracy))
     end_time = time.time()
