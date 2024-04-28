@@ -21,13 +21,13 @@ We are utilising [Ray](https://docs.ray.io/en/latest/) (an open-source unified c
 A Ray cluster consists of a single head node and any number of connected worker nodes. Users can submit jobs for execution on the Ray cluster.
 
 ##### Ray Head Node
-- 'ray start --head --port=6379   #specify the port number on the head node'
-- 'ray job submit --working-dir <working directory> -- python3 <python file>'
-- 'ray stop'
+- '''ray start --head --port=6379   #specify the port number on the head node'''
+- '''ray job submit --working-dir <working directory> -- python3 <python file>'''
+- '''ray stop'''
 
 ##### Ray Client Node
-- 'ray start --address=10.8.1.153:6379  #IP:port of the head node'
-- 'ray stop'
+- '''ray start --address=10.8.1.153:6379  #IP:port of the head node'''
+- '''ray stop'''
 
 ### Synchronous and Asynchronous Training
 Synchronous parameter server training involves a tightly synchronized communication pattern between workers and the parameter server. In this approach, all workers wait for each other to complete their gradients computation before updating the parameters. This ensures consistency across all workers and guarantees that every parameter update is based on the most recent global gradient. On the other hand, asynchronous parameter server training allows workers to update parameters independently without waiting for others. Each worker computes gradients based on its local data and updates the parameters asynchronously. 
