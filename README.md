@@ -1,4 +1,4 @@
-# ray_ps
+# Parameter Server for Distributed ML using Ray
 By utilizing the Parameter Server model, we distribute the workload across multiple nodes, facilitating parallel processing. The code provided in this repository demonstrates the training of a simple CNN model on the MNIST dataset, consisting of 60,000 images. In the parameter server framework, a centralized server (or group of server nodes) maintains global shared parameters of a machine-learning model (e.g., a neural network) while the data and computation of calculating updates (i.e., gradient descent updates) are distributed over worker nodes.
 
 Parameter Server (ps) will: 
@@ -33,6 +33,9 @@ A Ray cluster consists of a single head node and any number of connected worker 
 Synchronous parameter server training involves a tightly synchronized communication pattern between workers and the parameter server. In this approach, all workers wait for each other to complete their gradients computation before updating the parameters. This ensures consistency across all workers and guarantees that every parameter update is based on the most recent global gradient. On the other hand, asynchronous parameter server training allows workers to update parameters independently without waiting for others. Each worker computes gradients based on its local data and updates the parameters asynchronously. 
 
 For the purpose of the project we have elected to use asynchronous training given the heterogeneous nature of the architecture, however we have provided working code for both synchronous and asynchronous approaches.
+
+### Integration with ILP
+For integrating this work with the output of the ILP algorithm, **node affinity scheduling** can be used. This is a method by which particular tasks can be assigned to particular nodes in the cluster. In principle, the ILP program should return a list of nodes (as Node IDs), which will be running the ML process. Then these node IDs can be passed to the tasks and the node affinity scheduler individually. [Node Affinity Scheduling Strategy](https://docs.ray.io/en/latest/ray-core/api/doc/ray.util.scheduling_strategies.NodeAffinitySchedulingStrategy.html) is one of the many scheduling strategies that Ray offers, but this is the one which could be used for maximum customizability. For more information on Ray's scheduling strategies, visit [this page](https://docs.ray.io/en/latest/ray-core/scheduling/index.html).
 
 ### Documentation referred
 - [Ray Cluster](https://docs.ray.io/en/latest/cluster/key-concepts.html#cluster-key-concepts)
