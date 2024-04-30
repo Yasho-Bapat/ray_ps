@@ -36,6 +36,12 @@ Synchronous parameter server training involves a tightly synchronized communicat
 
 For the purpose of the project we have elected to use asynchronous training given the heterogeneous nature of the architecture, however we have provided working code for both synchronous and asynchronous approaches.
 
+### Implementation
+In this implementation, there are 4 modules (dataworker, modeldef, parameterserver and utilities). These 4 are core libraries required for the distributed system to run. These are described below:
+- `dataworker`: This module contains the methods that will be running on the dataworker nodes in the system. Specifically, the `compute_gradients()` function, which takes current weights and trains the model to increase its accuracy and returns the updated gradients.  
+- `modeldef`: This module contains the definition of the actual machine learning model that will be running on the devices. This is to be changed according to use case.
+- `parameterserver`: This module contains the actual code running on the PS, which does gradient aggregation, specifically the `apply_gradients` function.
+- `utilities`: This module contains general utility functions required for running, debugging and evaluating the program. As of this example, it contains a method to obtain data (from an online repository) and the function used for evaluating the model. More methods can be added as required. 
 ### Integration with ILP
 For integrating this work with the output of the ILP algorithm, **node affinity scheduling** can be used. This is a method by which particular tasks can be assigned to particular nodes in the cluster. In principle, the ILP program should return a list of nodes (as Node IDs), which will be running the ML process. Then these node IDs can be passed to the tasks and the node affinity scheduler individually. [Node Affinity Scheduling Strategy](https://docs.ray.io/en/latest/ray-core/api/doc/ray.util.scheduling_strategies.NodeAffinitySchedulingStrategy.html) is one of the many scheduling strategies that Ray offers, but this is the one which could be used for maximum customizability. For more information on Ray's scheduling strategies, visit [this page](https://docs.ray.io/en/latest/ray-core/scheduling/index.html).
 
