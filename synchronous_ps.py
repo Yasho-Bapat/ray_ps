@@ -1,6 +1,6 @@
 import time
 import ray
-import model, parameterserver, dataworker, utilities
+import modeldef, parameterserver, dataworker, utilities
 
 '''This example outlines synchronous training. That means that the gradients are aggregated iteratively once they are all available'''
 
@@ -11,8 +11,8 @@ import model, parameterserver, dataworker, utilities
 if __name__ == '__main__':
 
     num_workers = 2  # try to keep this equal to the number of machines available
-    iterations = 200  # keep this number high. it is variable, dependent upon the model you are running.
-    model = model.ConvNet()
+    iterations = 200  # keep this number high. it is variable, dependent upon the modeldef you are running.
+    model = modeldef.ConvNet()
     test_loader = utilities.get_data_loader()[1]
 
     print("Running Synchronous Parameter Server Training.")
@@ -28,7 +28,7 @@ if __name__ == '__main__':
         gradients = [worker.compute_gradients.remote(current_weights) for worker in workers]
         # Calculate update after all gradients are available.
         current_weights = ps.apply_gradients.remote(*gradients)
-        # Evaluate the current model.
+        # Evaluate the current modeldef.
         model.set_weights(ray.get(current_weights))
         accuracy = utilities.evaluate(model, test_loader)
         print("Iter {}: \taccuracy is {:.1f}".format(i, accuracy))

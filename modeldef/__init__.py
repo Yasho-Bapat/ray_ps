@@ -2,12 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-'''This is an example implementation of the model that will be executed using this system. In this example, we are using a simple
-convolutional neural network on the MNIST dataset, which contains 60,000 images. This file should be changed to whatever model is being
+'''This is an example implementation of the modeldef that will be executed using this system. In this example, we are using a simple
+convolutional neural network on the MNIST dataset, which contains 60,000 images. This file should be changed to whatever modeldef is being
 implemented'''
 
 class ConvNet(nn.Module):
-    # this is a simple example model. THIS SHOULD BE CHANGED ACCORDING TO USECASE
+    # this is a simple example modeldef. THIS SHOULD BE CHANGED ACCORDING TO USECASE
 
     def __init__(self):
         super(ConvNet, self).__init__()

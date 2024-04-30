@@ -1,6 +1,6 @@
 import time
 import ray
-import model, parameterserver, dataworker, utilities
+import modeldef, parameterserver, dataworker, utilities
 
 '''This example outlines asynchronous training. This means that gradients are aggregated in parallel, as soon as they are available. The aggregation is not dependent upon whether the other nodes have finished or not.
     This could, ideally, be a bit faster than synchronous'''
@@ -11,8 +11,8 @@ if __name__ == '__main__':
 
 
     num_workers = 2 #try to keep this equal to the number of machines available
-    iterations = 200 # keep this number high. it is variable, dependent upon the model you are running.
-    model = model.ConvNet()
+    iterations = 200 # keep this number high. it is variable, dependent upon the modeldef you are running.
+    model = modeldef.ConvNet()
     test_loader = utilities.get_data_loader()[1]
 
     print("Running Asynchronous Parameter Server Training.")
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     for worker in workers:
         gradients[worker.compute_gradients.remote(current_weights)] = worker
 
-    for i in range(iterations)
+    for i in range(iterations):
         ready_gradient_list, _ = ray.wait(list(gradients)) # ray.wait is an asynchronous call. the .wait() function ensures that whenever anything is possible in gradients, it is immediately used.
         ready_gradient_id = ready_gradient_list[0]
         worker = gradients.pop(ready_gradient_id)
@@ -39,7 +39,7 @@ if __name__ == '__main__':
         gradients[worker.compute_gradients.remote(current_weights)] = worker
 
         if i % 10 == 0:
-            # Evaluate the current model after every 10 updates.
+            # Evaluate the current modeldef after every 10 updates.
             model.set_weights(ray.get(current_weights))
             accuracy = utilities.evaluate(model, test_loader)
             print("Iter {}: \taccuracy is {:.1f}".format(i, accuracy))
